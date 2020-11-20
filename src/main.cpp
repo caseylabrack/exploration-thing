@@ -9,7 +9,7 @@ int main( ){
 	settings.glesVersion=2;
 #else
 	ofGLWindowSettings settings;
-	settings.setGLVersion(3,2);
+	settings.setGLVersion(2,1);
 #endif
 	ofCreateWindow(settings);
 	//~ ofSetupOpenGL(1024,768, OF_WINDOW);			// <-------- setup the GL context

@@ -6,6 +6,17 @@
 #define HEIGHT 50
 #define SCALE 10
 
+typedef struct node {
+	int x;
+	int y;
+	int free;
+	struct node* cameFrom;
+	int g;
+	int h;
+	int f;
+} Node;
+
+
 class ofApp : public ofBaseApp{
 	public:
 		void setup();
@@ -29,5 +40,7 @@ class ofApp : public ofBaseApp{
 		ofShader shader;
 		ofImage backgroundImage;
 		ofFbo maskFbo;
+		
+		node nodes[WIDTH][HEIGHT];
 
 };

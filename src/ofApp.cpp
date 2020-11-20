@@ -1,9 +1,12 @@
 #include "ofApp.h"
 #include <vector>
 
+#define PATH_WALL 0
+#define PATH_CLEAR 1
+
 float noiseScaleX = 8;
 float noiseScaleY = 8;
-float cutoff = .4;
+float cutoff = .35;
 bool highres = false;
 float seed;
 float speed = 10;
@@ -19,6 +22,23 @@ struct line {
 	vec2 b;
 };
 
+struct point {
+	int x;
+	int y;
+};
+
+point pointToNodeIndex (vec2 p) {
+	return (struct point){ (int)roundf(p.x/10), (int)roundf(p.y/10) };
+} 
+
+int coordToNodeIndex (float x) {
+	return (int)roundf(x/10);
+}
+
+float hueristic (Node* a, Node* b) {
+	return ofDist(a->x, a->y, b->x, b->y);
+}
+
 vector<line> lines;
 vector<vector<line>> polylines;
 
@@ -27,6 +47,13 @@ vector<line> polygon;
 vec2 hits [360];
 int rangelow = 0;
 int rangehigh = 10;
+
+vec2 startPoint = vec2(250,250);
+vec2 endPoint = vec2(0,0);
+vector<vec2> path;
+ofPolyline pathshow;
+
+bool pathfound = false;
 
 
 int getState(int a, int b, int c, int d) {
@@ -65,24 +92,28 @@ void ofApp::setup(){
 	
 	for(int i = 0; i < WIDTH; i++) {
 		for(int j = 0; j < HEIGHT; j++) {
-			noises[i][j] = ofNoise(i/noiseScaleX + seed, j/noiseScaleY + seed) > cutoff ? 1 : 0;
+			noises[i][j] = ofNoise(i/noiseScaleX + seed, j/noiseScaleY + seed) > cutoff ? PATH_CLEAR : PATH_WALL;
 		}
 	}
 	
 	for(int l = 0; l < HEIGHT; l++) {
-		noises[0][l] = 1;
-		noises[WIDTH-1][l] = 1;
+		noises[0][l] = PATH_WALL;
+		noises[WIDTH-1][l] = PATH_WALL;
 	}
 	for(int k = 0; k < WIDTH; k++) {
-		noises[k][0] = 1;
-		noises[k][HEIGHT - 1] = 1;
+		noises[k][0] = PATH_WALL;
+		noises[k][HEIGHT - 1] = PATH_WALL;
 	}
 	
 	// clear spawn
-	noises[(int)floor(WIDTH/2)][(int)floor(HEIGHT/2)] = 1;
-	noises[(int)floor(WIDTH/2) + 1][(int)floor(HEIGHT/2)] = 1;
-	noises[(int)floor(WIDTH/2)][(int)floor(HEIGHT/2) + 1] = 1;
-	noises[(int)floor(WIDTH/2) + 1][(int)floor(HEIGHT/2) + 1] = 1;
+	noises[(int)floor(WIDTH/2)][(int)floor(HEIGHT/2)] = PATH_CLEAR;
+	noises[(int)floor(WIDTH/2) - 1][(int)floor(HEIGHT/2)] = PATH_CLEAR;
+	noises[(int)floor(WIDTH/2) - 1][(int)floor(HEIGHT/2) - 1] = PATH_CLEAR;
+	noises[(int)floor(WIDTH/2)][(int)floor(HEIGHT/2) - 1] = PATH_CLEAR;
+	noises[(int)floor(WIDTH/2) + 1][(int)floor(HEIGHT/2)] = PATH_CLEAR;
+	noises[(int)floor(WIDTH/2)][(int)floor(HEIGHT/2) + 1] = PATH_CLEAR;
+	noises[(int)floor(WIDTH/2) + 1][(int)floor(HEIGHT/2) + 1] = PATH_CLEAR;
+	noises[25][25] = PATH_CLEAR;
 	
 	vec2 a, b, c, d;	
 	int x, y;
@@ -153,6 +184,24 @@ void ofApp::setup(){
 		}
 	}
 	
+	int passable;
+	Node n;
+	for(int i = 0; i < WIDTH; i++) {
+		for(int j = 0; j < HEIGHT; j++) {
+			passable = PATH_CLEAR;
+			if(noises[i][j] == PATH_WALL) 					passable = PATH_WALL;
+			if(i > 0) if(noises[i-1][j] == PATH_WALL) 		passable = PATH_WALL;
+			if(i < WIDTH) if(noises[i+1][j] == PATH_WALL) 	passable = PATH_WALL;
+			if(j > 0) if(noises[i][j-1] == PATH_WALL) 		passable = PATH_WALL;
+			if(j < HEIGHT) if(noises[i][j+1] == PATH_WALL) 	passable = PATH_WALL;
+			n.x = i * 10;
+			n.y = j * 10;
+			n.free = passable;
+			n.g = 10000;
+			nodes[i][j] = n;
+		}
+	}
+	
 	//~ line test = lines[0];
 	
 	//~ vector<int> indices;
@@ -184,7 +233,6 @@ void ofApp::setup(){
     ofClear(0,0,0,0);
     maskFbo.end();
     
-    //~ backgroundImage.load("B.jpg");
     backgroundImage.allocate(500,500,OF_IMAGE_COLOR_ALPHA);
     backgroundImage.setColor(ofColor::black);
     backgroundImage.update();
@@ -248,12 +296,38 @@ void ofApp::draw(){
 	ofPushStyle();
 	ofSetColor(ofColor::antiqueWhite);
 	ofNoFill();
-	ofSetLineWidth(6);
+	ofSetLineWidth(1);
 	
 	for (auto l = lines.begin(); l != lines.end(); l++) {
 		ofDrawLine(l->a, l->b);
 	}
 	ofPopStyle();
+	
+	ofPushStyle();
+	ofSetColor(ofColor::green);
+	ofNoFill();
+	for(int i = 0; i < WIDTH; i++) {
+		//~ ofDrawLine(i,0,i,HEIGHT*10);
+		for(int j = 0; j < HEIGHT; j++) {
+			//~ ofDrawRectangle(i*10,j*10,10,10);
+			//~ if(!noises[i][j]) continue;
+			//~ if(i > 0) if(!noises[i-1][j]) 		continue;
+			//~ if(i < WIDTH) if(!noises[i+1][j]) 	continue;
+			//~ if(j > 0) if(!noises[i][j-1]) 		continue;
+			//~ if(j < HEIGHT) if(!noises[i][j+1]) 	continue;
+			if(!nodes[i][j].free) continue;
+			ofDrawCircle(i*10,j*10,2);
+		}
+	}
+	ofPopStyle();
+	
+	ofPushStyle();
+	ofSetColor(ofColor::red);
+	ofDrawCircle(startPoint.x, startPoint.y, 3);
+	ofDrawCircle(endPoint.x, endPoint.y, 3);
+	if(pathfound) pathshow.draw();
+	ofPopStyle();
+
 
 
 }
@@ -308,7 +382,89 @@ void ofApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
+	
+	endPoint = vec2(x, y);
+	
+	Node* startNode = &nodes[coordToNodeIndex(startPoint.x)][coordToNodeIndex(startPoint.y)];	
+	Node* endNode = &nodes[coordToNodeIndex(endPoint.x)][coordToNodeIndex(endPoint.y)];
+	
+	vector<Node*> neighbors;
+	
+	vector<Node*> openSet;
+	openSet.push_back(startNode);
+	startNode->g = 0;
+	float dist = hueristic(startNode, endNode);
+	startNode->f = dist;
+	printf("start node: %d, %d -- end node: %d, %d\n", startNode->x, startNode->y, endNode->x, endNode->y);
+	printf("dist: %f\n", dist);
+	
+	while(!openSet.empty()) {
+		Node* current;
+		int currentIndexInOpenSet;
+		float lowestF = std::numeric_limits<float>::max();
+		float d;
+		for(int i = 0; i < openSet.size(); i++) {
+			d = openSet[i]->f;
+			if(d < lowestF) {
+				current = openSet[i];
+				lowestF = d;
+				currentIndexInOpenSet = i;
+			}
+		}
+		printf("current one is: %d, %d, g: %d\n", current->x, current->y, current->g);
+		if(current->x == endNode->x && current->y == endNode->y) {
+			printf("reached goal\n");
+			
+			path.clear();
+			
+			Node* step = current;
+			while(!(step->x==startNode->x && step->y==startNode->y)){
+				path.push_back(vec2(step->x, step->y));
+				pathshow.addVertex(step->x, step->y);
+				step = step->cameFrom;
+			}
+			
+			printf("path is:\n");
+			for(int i = 0; i < path.size(); i++) {
+				printf("x: %f, y: %f\n", path[i].x, path[i].y);
+			}
+			//~ pathshow 
+			pathfound = true;
+			return;
+		} else {
+			openSet.erase(openSet.begin() + currentIndexInOpenSet);
+			neighbors.clear();
+			if(current->x > 0) neighbors.push_back(&nodes[coordToNodeIndex((current->x) - 10)][coordToNodeIndex(current->y)]);
+			if(current->x < 500) neighbors.push_back(&nodes[coordToNodeIndex((current->x) + 10)][coordToNodeIndex(current->y)]);
+			if(current->y > 0) neighbors.push_back(&nodes[coordToNodeIndex(current->x)][coordToNodeIndex((current->y) - 10)]);
+			if(current->y < 500) neighbors.push_back(&nodes[coordToNodeIndex(current->x)][coordToNodeIndex((current->y) + 10)]);
+			for(int i = 0; i < neighbors.size(); i++) {
+				if(neighbors[i]->free == PATH_WALL) continue;
+				int testGScore = current->g + 1;
+				printf("looking at node %d, %d, g: %d\n", neighbors[i]->x, neighbors[i]->y, neighbors[i]->g);
+				if(testGScore < neighbors[i]->g) {
+					neighbors[i]->cameFrom = current;
+					neighbors[i]->g = testGScore;
+					neighbors[i]->f = testGScore + hueristic(current, neighbors[i]);
+					
+					bool inOpenSet = false;
+					for(int j = 0; j < openSet.size(); j++) {
+						if(openSet[j]->x == neighbors[i]->x && openSet[j]->y == neighbors[i]->y) {
+							inOpenSet = true;
+						}
+					}
+					if(inOpenSet==false) {
+						openSet.push_back(neighbors[i]);
+						printf("adding to openset: %d, %d\n", neighbors[i]->x, neighbors[i]->y);
+					}
+				}
+			}
+		}
+	}
+	
+	printf("no dice. open set size? %lu\n", openSet.size());
+	return;
+	
 }
 
 //--------------------------------------------------------------
