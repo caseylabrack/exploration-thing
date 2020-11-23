@@ -1,28 +1,14 @@
 #pragma once
 
 #include "ofMain.h"
-
-#define WIDTH 50
-#define HEIGHT 50
-#define SCALE 10
-
-typedef struct node {
-	int x;
-	int y;
-	int free;
-	struct node* cameFrom;
-	float g;
-	float h;
-	float f;
-} Node;
-
+#include "pathfind.h"
 
 class ofApp : public ofBaseApp{
 	public:
 		void setup();
 		void update();
 		void draw();
-		
+
 		void keyPressed(int key);
 		void keyReleased(int key);
 		void mouseMoved(int x, int y);
@@ -34,13 +20,13 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
-		
+
 		ofImage img;
 		float noises[WIDTH][HEIGHT];
 		ofShader shader;
 		ofImage backgroundImage;
 		ofFbo maskFbo;
-		
-		node nodes[WIDTH][HEIGHT];
+
+		Node nodes[WIDTH][HEIGHT];
 
 };
