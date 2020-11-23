@@ -11,9 +11,9 @@ typedef struct node {
 	int y;
 	int free;
 	struct node* cameFrom;
-	int g;
-	int h;
-	int f;
+	float g;
+	float h;
+	float f;
 } Node;
 
 

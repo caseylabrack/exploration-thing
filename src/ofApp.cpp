@@ -385,6 +385,16 @@ void ofApp::mouseReleased(int x, int y, int button){
 	
 	endPoint = vec2(x, y);
 	
+	pathshow.clear();
+	
+	for(int i = 0; i < WIDTH; i++) {
+		for(int j = 0; j < HEIGHT; j++) {
+			nodes[i][j].g = std::numeric_limits<float>::max();
+			nodes[i][j].f = std::numeric_limits<float>::max();
+			nodes[i][j].h = 0;
+		}
+	}
+	
 	Node* startNode = &nodes[coordToNodeIndex(startPoint.x)][coordToNodeIndex(startPoint.y)];	
 	Node* endNode = &nodes[coordToNodeIndex(endPoint.x)][coordToNodeIndex(endPoint.y)];
 	
@@ -411,7 +421,7 @@ void ofApp::mouseReleased(int x, int y, int button){
 				currentIndexInOpenSet = i;
 			}
 		}
-		printf("current one is: %d, %d, g: %d\n", current->x, current->y, current->g);
+		printf("current one is: %d, %d, g: %f\n", current->x, current->y, current->g);
 		if(current->x == endNode->x && current->y == endNode->y) {
 			printf("reached goal\n");
 			
@@ -423,25 +433,31 @@ void ofApp::mouseReleased(int x, int y, int button){
 				pathshow.addVertex(step->x, step->y);
 				step = step->cameFrom;
 			}
+			path.push_back(vec2(startNode->x, startNode->y));
+			pathshow.addVertex(startNode->x, startNode->y);
 			
 			printf("path is:\n");
 			for(int i = 0; i < path.size(); i++) {
 				printf("x: %f, y: %f\n", path[i].x, path[i].y);
 			}
-			//~ pathshow 
 			pathfound = true;
 			return;
 		} else {
 			openSet.erase(openSet.begin() + currentIndexInOpenSet);
 			neighbors.clear();
-			if(current->x > 0) neighbors.push_back(&nodes[coordToNodeIndex((current->x) - 10)][coordToNodeIndex(current->y)]);
-			if(current->x < 500) neighbors.push_back(&nodes[coordToNodeIndex((current->x) + 10)][coordToNodeIndex(current->y)]);
-			if(current->y > 0) neighbors.push_back(&nodes[coordToNodeIndex(current->x)][coordToNodeIndex((current->y) - 10)]);
-			if(current->y < 500) neighbors.push_back(&nodes[coordToNodeIndex(current->x)][coordToNodeIndex((current->y) + 10)]);
+			if(current->x > 0) 							neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1][coordToNodeIndex(current->y)]);
+			if(current->x < 500) 						neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1][coordToNodeIndex(current->y)]);
+			if(current->y > 0) 							neighbors.push_back(&nodes[coordToNodeIndex(current->x)][coordToNodeIndex(current->y)-1]);
+			if(current->y < 500) 						neighbors.push_back(&nodes[coordToNodeIndex(current->x)][coordToNodeIndex(current->y)+1]);
+			if(current->x > 0 && current->y > 0) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1][coordToNodeIndex(current->y)-1]);
+			if(current->x > 0 && current->y < 500) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1][coordToNodeIndex(current->y)+1]);
+			if(current->x < 500 && current->y > 0) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1][coordToNodeIndex(current->y)-1]);
+			if(current->x < 500 && current->y < 500)	neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1][coordToNodeIndex(current->y)+1]);
+			
 			for(int i = 0; i < neighbors.size(); i++) {
 				if(neighbors[i]->free == PATH_WALL) continue;
-				int testGScore = current->g + 1;
-				printf("looking at node %d, %d, g: %d\n", neighbors[i]->x, neighbors[i]->y, neighbors[i]->g);
+				int testGScore = current->g + (current->x!=neighbors[i]->x && current->y!=neighbors[i]->y) ? 1.41421356237 : 1; // adjacent dist is 1, diag is √2
+				printf("looking at node %d, %d, g: %f\n", neighbors[i]->x, neighbors[i]->y, neighbors[i]->g);
 				if(testGScore < neighbors[i]->g) {
 					neighbors[i]->cameFrom = current;
 					neighbors[i]->g = testGScore;
