@@ -1,7 +1,10 @@
 #pragma once
 
+#include "projconsts.h"
 #include "ofMain.h"
 #include "pathfind.h"
+#include "lines.h"
+
 
 class ofApp : public ofBaseApp{
 	public:

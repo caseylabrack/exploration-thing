@@ -1,16 +1,11 @@
 #pragma once
-
+#include "projconsts.h"
 #include <vector>
-#include "ofMain.h"
 
 using namespace glm;
 
 #define PATH_WALL 0
 #define PATH_CLEAR 1
-
-#define WIDTH 50
-#define HEIGHT 50
-#define SCALE 10
 
 typedef struct node {
 	int x;
