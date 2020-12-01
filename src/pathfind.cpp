@@ -1,7 +1,4 @@
-#include "ofMain.h"
 #include "pathfind.h"
-
-using namespace glm;
 
 int coordToNodeIndex (float x) {
 	return (int)roundf(x/10);
@@ -61,13 +58,13 @@ bool path_FindPath(vector<vec2>* path, Node nodes[WIDTH][HEIGHT], vec2 startPoin
       openSet.erase(openSet.begin() + currentIndexInOpenSet);
       neighbors.clear();
       if(current->x > 0) 							neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1	][coordToNodeIndex(current->y)]		);
-      if(current->x < 500) 						neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1	][coordToNodeIndex(current->y)]		);
+      if(current->x < WIDTH * SCALE) 						neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1	][coordToNodeIndex(current->y)]		);
       if(current->y > 0) 							neighbors.push_back(&nodes[coordToNodeIndex(current->x)		][coordToNodeIndex(current->y)-1]	);
-      if(current->y < 500) 						neighbors.push_back(&nodes[coordToNodeIndex(current->x)		][coordToNodeIndex(current->y)+1]	);
+      if(current->y < WIDTH * SCALE) 						neighbors.push_back(&nodes[coordToNodeIndex(current->x)		][coordToNodeIndex(current->y)+1]	);
       if(current->x > 0 && current->y > 0) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1	][coordToNodeIndex(current->y)-1]	);
-      if(current->x > 0 && current->y < 500) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1	][coordToNodeIndex(current->y)+1]	);
-      if(current->x < 500 && current->y > 0) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1	][coordToNodeIndex(current->y)-1]	);
-      if(current->x < 500 && current->y < 500)	neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1	][coordToNodeIndex(current->y)+1])	;
+      if(current->x > 0 && current->y < WIDTH * SCALE) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)-1	][coordToNodeIndex(current->y)+1]	);
+      if(current->x < WIDTH * SCALE && current->y > 0) 		neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1	][coordToNodeIndex(current->y)-1]	);
+      if(current->x < WIDTH * SCALE && current->y < WIDTH * SCALE)	neighbors.push_back(&nodes[coordToNodeIndex(current->x)+1	][coordToNodeIndex(current->y)+1])	;
 
       for(int i = 0; i < neighbors.size(); i++) {
         if(neighbors[i]->free == PATH_WALL) continue;

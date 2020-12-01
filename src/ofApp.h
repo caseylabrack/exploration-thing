@@ -5,6 +5,12 @@
 #include "pathfind.h"
 #include "lines.h"
 
+typedef struct camera {
+	float x;
+	float y;
+	float w;
+	float h;
+} camera;
 
 class ofApp : public ofBaseApp{
 	public:
@@ -24,12 +30,18 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 
-		ofImage img;
-		float noises[WIDTH][HEIGHT];
+		float seed;
+
 		ofShader shader;
 		ofImage backgroundImage;
 		ofFbo maskFbo;
 
+		vec2 player;
+		camera cam;
+
+		int currentSector;
+		float noises[WIDTH][HEIGHT];
 		Node nodes[WIDTH][HEIGHT];
+		vector<line> linesSectors[(int)WIDTH/SECTOR_WIDTH];
 
 };

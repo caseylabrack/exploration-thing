@@ -11,5 +11,5 @@ struct line {
 	vec2 b;
 };
 
-extern vec2 lines_lineCast (const vector<line> &field, const line l);
+extern vec2 lines_lineCast (vector<line>* sectors, int index, int indexmax, const line l);
 extern void lines_marchingSquares (vector<line>* lines, float noises[WIDTH][HEIGHT]);

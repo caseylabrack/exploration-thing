@@ -24,6 +24,30 @@ vec2 lines_lineCast (const vector<line> &field, const line l) {
 	return closest;
 }
 
+vec2 lines_lineCast (vector<line>* sectors, int index, int indexmax, const line l) {
+
+	vec2 out;
+	float dist = ofDistSquared(l.a.x, l.a.y, l.b.x, l.b.y);
+	vec2 closest = l.b;
+	float testdist;
+
+  int sectorsize;
+  for(int i = index; i < indexmax;   i++) {
+    sectorsize = sectors[i].size();
+    for(int j = 0; j < sectorsize; j++) {
+      if(ofLineSegmentIntersection(sectors[i][j].a, sectors[i][j].b, l.a, l.b, out)) {
+        testdist = ofDistSquared(l.a.x, l.a.y, out.x, out.y);
+        if(testdist < dist) {
+          dist = testdist;
+          closest = out;
+        }
+      }
+    }
+  }
+
+	return closest;
+}
+
 void lines_marchingSquares (vector<line>* lines, float noises[WIDTH][HEIGHT]){
   vec2 a, b, c, d;
   int x, y;

@@ -1,5 +1,7 @@
 #pragma once
+
 #include "projconsts.h"
+#include "ofMain.h"
 #include <vector>
 
 using namespace glm;
